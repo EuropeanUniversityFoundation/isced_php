@@ -1,0 +1,17 @@
+{
+    "name": "euf/isced",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Isced\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Tiago Simões",
+            "email": "tiago.simoes@uni-foundation.eu"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
