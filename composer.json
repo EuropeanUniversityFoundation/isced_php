@@ -1,6 +1,8 @@
 {
     "name": "euf/isced",
+    "description": "PHP library providing ISCED-F 2013 fields of study.",
     "type": "library",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Isced\\": "src/"
