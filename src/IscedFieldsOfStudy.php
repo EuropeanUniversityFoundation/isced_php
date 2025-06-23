@@ -168,9 +168,9 @@ final class IscedFieldsOfStudy
      *
      * @param string $code The code of the field of study to check.
      *
-     * @return string
+     * @return string|null
      */
-    public function getNarrow(string $code): string
+    public function getNarrow(string $code): ?string
     {
         return $this->get($code)[self::NARROW];
     }
@@ -180,9 +180,9 @@ final class IscedFieldsOfStudy
      *
      * @param string $code The code of the field of study to check.
      *
-     * @return string
+     * @return string|null
      */
-    public function getDetailed(string $code): string
+    public function getDetailed(string $code): ?string
     {
         return $this->get($code)[self::DETAILED];
     }
