@@ -30,3 +30,11 @@ $tree = $iscedF->getTree();
 echo(json_encode($tree, JSON_PRETTY_PRINT) . "\n");
 
 ```
+
+## Development
+
+    git clone https://github.com/EuropeanUniversityFoundation/elm_vocabularies_php.git
+    composer update --prefer-stable
+    phpstan analyze src/ data/ --level=10
+    phpcs src/ data/
+
