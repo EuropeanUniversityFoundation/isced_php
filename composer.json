@@ -20,6 +20,7 @@
     "minimum-stability": "dev",
     "require-dev": {
         "phpstan/phpstan": "^2.1",
-        "squizlabs/php_codesniffer": "^4.0"
+        "squizlabs/php_codesniffer": "^4.0",
+        "sweetrdf/easyrdf": "^1.19"
     }
 }
