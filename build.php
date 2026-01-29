@@ -4,12 +4,20 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+use Brick\VarExporter\VarExporter;
 use EasyRdf\Graph;
 use EasyRdf\RdfNamespace;
+use Twig\Environment;
+use Twig\Extra\Intl\IntlExtension;
+use Twig\Loader\FilesystemLoader;
+
+$loader = new FilesystemLoader(__DIR__ . '/templates');
+$twig = new Environment($loader, [
+    'autoescape' => false,
+]);
+$twig->addExtension(new IntlExtension());
 
 RdfNamespace::set('dc', 'http://purl.org/dc/elements/1.1/');
-RdfNamespace::set('dcterms', 'http://purl.org/dc/terms/');
-RdfNamespace::set('ns5', 'http://publications.europa.eu/ontology/euvoc#');
 RdfNamespace::set('skos', 'http://www.w3.org/2004/02/skos/core#');
 
 $baseUri = 'http://data.europa.eu/snb/isced-f/25831c2';
@@ -55,7 +63,7 @@ foreach ($broadConcepts as $broad) {
     $broadConcept = $broadGraph->resource($broadUri);
 
     $broadIdentifier = $broadConcept->get('dc:identifier');
-    /** @var \EasyRdf\Literal $identifier */
+    /** @var \EasyRdf\Literal $broadIdentifier */
     $broadId = $broadIdentifier->__toString();
 
     $broadLabels = $broadConcept->allLiterals('skos:prefLabel');
@@ -81,7 +89,7 @@ foreach ($broadConcepts as $broad) {
         $narrowConcept = $narrowGraph->resource($narrowUri);
 
         $narrowIdentifier = $narrowConcept->get('dc:identifier');
-        /** @var \EasyRdf\Literal $identifier */
+        /** @var \EasyRdf\Literal $narrowIdentifier */
         $narrowId = $narrowIdentifier->__toString();
 
         $narrowLabels = $narrowConcept->allLiterals('skos:prefLabel');
@@ -108,7 +116,7 @@ foreach ($broadConcepts as $broad) {
                 $detailedConcept = $detailedGraph->resource($detailedUri);
 
                 $detailedIdentifier = $detailedConcept->get('dc:identifier');
-                /** @var \EasyRdf\Literal $identifier */
+                /** @var \EasyRdf\Literal $detailedIdentifier */
                 $detailedId = $detailedIdentifier->__toString();
 
                 $labels = $detailedConcept->allLiterals('skos:prefLabel');
@@ -120,23 +128,17 @@ foreach ($broadConcepts as $broad) {
 
                 $narrowTree['detailed'][$detailedId] = $detailedTree;
             }
-            
         }
 
         ksort($narrowTree['detailed']);
         $broadTree['narrow'][$narrowId] = $narrowTree;
-            
     }
 
     ksort($broadTree['narrow']);
     $tree['broad'][$broadId] = $broadTree;
-
 }
 
 ksort($tree['broad']);
-
-$treeJson = __DIR__ . '/tmp/tree.json';
-file_put_contents($treeJson, json_encode($tree, JSON_PRETTY_PRINT));
 
 $data = [];
 
@@ -167,7 +169,84 @@ foreach ($tree['broad'] as $broadId => $broadField) {
     }
 }
 
-$dataJson = __DIR__ . '/tmp/data.json';
-file_put_contents($dataJson, json_encode($data, JSON_PRETTY_PRINT));
+$dataFile = __DIR__ . '/data/isced.php';
+$dataFileHeader = "<?php\n\n";
+$dataExport = VarExporter::export(
+    $data,
+    VarExporter::ADD_RETURN | VarExporter::TRAILING_COMMA_IN_ARRAY,
+);
+$dataFileContent = $dataFileHeader . $dataExport;
+file_put_contents($dataFile, $dataFileContent);
 
 echo(strval($requests) . " requests made.\n");
+
+$translations = [];
+
+$enLabel = $tree['labels']['en'];
+foreach ($tree['labels'] as $langcode => $label) {
+    /** @var string $enLabel */
+    $translations[$langcode][$enLabel] = $label;
+}
+
+foreach ($tree['broad'] as $broad) {
+    /** @var string $enLabel */
+    $enLabel = $broad['labels']['en'];
+    foreach ($broad['labels'] as $langcode => $label) {
+        $translations[$langcode][$enLabel] = $label;
+    }
+
+    foreach ($broad['narrow'] as $narrow) {
+        /** @var string $enLabel */
+        $enLabel = $narrow['labels']['en'];
+        foreach ($narrow['labels'] as $langcode => $label) {
+            $translations[$langcode][$enLabel] = $label;
+        }
+
+        foreach ($narrow['detailed'] as $detailed) {
+            /** @var string $enLabel */
+            $enLabel = $detailed['labels']['en'];
+            foreach ($detailed['labels'] as $langcode => $label) {
+                $translations[$langcode][$enLabel] = $label;
+            }
+        }
+    }
+}
+
+echo(strval(count($translations, COUNT_RECURSIVE)) . " translations.\n");
+
+$messages = [];
+foreach ($translations as $langcode => $list) {
+    $messages[$langcode] = [];
+    foreach ($list as $key => $value) {
+        $messages[$langcode][] = [
+            'msgid' => $key,
+            'msgstr' => $value,
+        ];
+    }
+}
+
+echo(strval(count($messages, COUNT_RECURSIVE)) . " messages.\n");
+
+foreach ($localeCopies as $source => $targets) {
+    foreach ($targets as $target) {
+        $messages[$target] = $messages[$source];
+    }
+}
+
+foreach ($messages as $langcode => $messages) {
+    if ($langcode != 'en') {
+        $twigData = [
+            'langcode' => $langcode,
+            'messages' => $messages,
+        ];
+
+        $content = $twig->render('translation.po.twig', $twigData);
+
+        $dir = __DIR__ . '/translations/' . $langcode . '/LC_MESSAGES/';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        file_put_contents($dir . 'isced.po', $content);
+    }
+}

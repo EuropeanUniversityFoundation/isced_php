@@ -21,6 +21,9 @@
     "require-dev": {
         "phpstan/phpstan": "^2.1",
         "squizlabs/php_codesniffer": "^4.0",
-        "sweetrdf/easyrdf": "^1.19"
+        "sweetrdf/easyrdf": "^1.19",
+        "brick/varexporter": "^0.7.0",
+        "twig/twig": "^3.23",
+        "twig/intl-extra": "^3.23"
     }
 }

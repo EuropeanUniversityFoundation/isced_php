@@ -33,9 +33,10 @@ echo(json_encode($tree, JSON_PRETTY_PRINT) . "\n");
 
 ## Development
 
-    git clone https://github.com/EuropeanUniversityFoundation/elm_vocabularies_php.git
-    cd elm_vocabularies_php/
+    git clone https://github.com/EuropeanUniversityFoundation/isced_php.git
+    cd isced_php/
     composer update --prefer-stable
-    phpstan analyze src/ data/ --level=10
-    phpcs src/ data/
-
+    php build.php
+    phpstan analyze src/ data/ build.php --level=10
+    phpcs src/ build.php
+    phpcs data/ --exclude=Generic.Files.LineLength
